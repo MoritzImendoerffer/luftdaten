@@ -15,6 +15,8 @@ def runcmd(cmd, verbose=False, *args, **kwargs):
     :param kwargs:
     :return:
     """
+    print(f'Start Start Downloaded from {cmd.split("/")[-2]}')
+
     process = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -30,8 +32,8 @@ def runcmd(cmd, verbose=False, *args, **kwargs):
     pass
 
 url = "https://archive.sensor.community "
-start_date = "2022-06"
-
+start_date = "2018-01"
+end_date = "2021-01"
 split = start_date.split('-')
 start_date = datetime.datetime(year=int(split[0]),
                                month=int(split[1]),
@@ -48,7 +50,7 @@ end_date = datetime.datetime(year=int(split[0]),
 
 base_cmd = "wget -A '*.zip' -r -np -nc -l3 --no-check-certificate -e robots=off -P ../data/ https://archive.sensor.community/csv_per_month/"
 
-max_iter = 1000
+max_iter = 100
 idx = 0
 while start_date != end_date:
 
@@ -56,9 +58,10 @@ while start_date != end_date:
     cmd = base_cmd + date_string + '/'
     runcmd(cmd)
 
-    start_date -= timedelta
-    idx += 2
+    start_date += timedelta
+    idx += 1
     if idx >= max_iter:
         break
     time.sleep(1)
 
+    
