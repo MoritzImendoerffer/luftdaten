@@ -50,26 +50,3 @@ for data in tqdm(folders):
                 )
                 std_out, std_err = process.communicate()
         
-
-
-
-    # file_name = date + '_' + sensor + '.csv'
-    # zip_file = date + '_' + sensor + '.zip'
-        
-    # file_path = os.path.join(DATAPATH, date, file_name)
-
-    # zip_path = os.path.join(DATAPATH, date, zip_file)
-    # if os.path.exists(zip_path):
-    #     if os.path.exists(file_path):
-    #         logging.info(f"csv already exists: {zip_path}")
-    #     else:
-    #         logging.info(f"unzipping: {zip_path}")
-    #         cmd = "unzip" + ' ' + zip_path + ' -d' + ' ' + os.path.join(DATAPATH, date)
-    #         process = subprocess.Popen(
-    #             cmd,
-    #             stdout=subprocess.PIPE,
-    #             stderr=subprocess.PIPE,
-    #             shell=True
-    #         )
-    #         std_out, std_err = process.communicate()
-
