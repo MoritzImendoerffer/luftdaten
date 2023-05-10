@@ -61,4 +61,3 @@ while start_date != end_date:
     if idx >= max_iter:
         break
     time.sleep(1)
-
