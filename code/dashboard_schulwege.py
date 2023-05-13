@@ -20,9 +20,12 @@ from bokeh.models import HoverTool
 from panel.widgets import DateRangeSlider
 
 
-link = '/home/moritz/Sync/schulwege_data/'
+link = '/home/moritz/Sync/schulwege_data/data'
 data_path = pathlib.Path(link)
 files = [f for f in os.listdir(data_path) if f.endswith('.csv')]
+
+table = pd.read_csv(data_path.parent.joinpath('table.csv'))
+table.columns = ['id', 'name', 'lastseen', 'lastip', 'version']
 
 df_list = []
 columns = ["timestamp",	
@@ -58,6 +61,9 @@ unique_locations = {value: index for index, value in enumerate(set([tuple(i) for
 df["location_tuple"] = [tuple(i) for i in df.loc[:, ["latitude", "longitude"]].values]
 df["location_id"] = df["location_tuple"].map(unique_locations)
 mask = df['datetime'] > datetime.datetime(1970, 12, 31)
+df = df.loc[mask,:]
+df = df.merge(table.loc[:, ["id", "lastip", "name"]], on="id")
+
 #gr = df[mask].set_index("id").groupby([pd.Grouper(key='datetime', freq='1d'), 'id'])
 
 
@@ -73,8 +79,7 @@ date_range_slider = DateRangeSlider(name='Date Range',
                                     end=df['datetime'].max(), 
                                     value=(df['datetime'].min(), df['datetime'].max()), width=600)
 
-mask = df['datetime'] > datetime.datetime(1970, 12, 31)
-df = df[mask]
+
 # Timeseries plot
 def timeseries_plot(selected_id, date_range):
     filtered_df = df[(df['id'] == selected_id) & 
