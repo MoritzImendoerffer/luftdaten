@@ -73,8 +73,8 @@ def timeseries_plot(selected_id, date_range):
         width=600, height=400, tools=[hover], ylabel='PM10', color='location_id')
     c = hv.Curve(filtered_df, kdims=['datetime'], vdims=['pm10']).opts(
         width=600, height=400, ylabel='PM10', color='black', alpha=0.5)
-    #curve = timeseries.rolling(c)
-    return decimate(plot) * decimate(c)
+    curve = timeseries.rolling(c)
+    return decimate(plot) * decimate(curve)
 
 def map_plot(selected_id, date_range):
     filtered_df = df[(df['id'] == selected_id) & 
