@@ -70,11 +70,11 @@ def timeseries_plot(selected_id, date_range):
     
     hover = HoverTool(tooltips=[("pm10", "@pm10"), ("lon", "@longitude"), ('lat', '@latitude')])
     plot = hv.Scatter(filtered_df, kdims=['datetime'], vdims=['pm10', 'longitude', 'latitude', 'location_id']).opts(
-        width=600, height=400, tools=[hover], ylabel='PM10', color='location_id', cmap="TolRainbow")
-    c = hv.Curve(filtered_df, kdims=['datetime'], vdims=['pm10', 'longitude', 'latitude']).opts(
-        width=600, height=400, tools=[hover], ylabel='PM10', color='black', alpha=0.5)
-    curve = timeseries.rolling(c)
-    return decimate(plot) * decimate(curve)
+        width=600, height=400, tools=[hover], ylabel='PM10', color='location_id')
+    c = hv.Curve(filtered_df, kdims=['datetime'], vdims=['pm10']).opts(
+        width=600, height=400, ylabel='PM10', color='black', alpha=0.5)
+    #curve = timeseries.rolling(c)
+    return decimate(plot) * decimate(c)
 
 def map_plot(selected_id, date_range):
     filtered_df = df[(df['id'] == selected_id) & 
