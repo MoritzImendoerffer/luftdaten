@@ -25,8 +25,21 @@ data_path = pathlib.Path(link)
 files = [f for f in os.listdir(data_path) if f.endswith('.csv')]
 
 df_list = []
+columns = ["timestamp",	
+           "latitude",	
+           "longitude",	
+           "temperature",
+           "humidity",
+           "pm1",
+           "pm25",
+           "pm10",
+           "noxidx",
+           "vocidx",
+           "count"]
+
 for file in files:
     _df = pd.read_csv(data_path.joinpath(file))
+    _df.columns = columns
     _df['id'] = file.split('.csv')[0]
     df_list.append(_df)
 df = pd.concat(df_list)
@@ -44,7 +57,7 @@ df['datetime_str'] = df["datetime"].astype(str)
 unique_locations = {value: index for index, value in enumerate(set([tuple(i) for i in df.loc[:, ["latitude", "longitude"]].values]))}
 df["location_tuple"] = [tuple(i) for i in df.loc[:, ["latitude", "longitude"]].values]
 df["location_id"] = df["location_tuple"].map(unique_locations)
-#mask = df['datetime'] > datetime.datetime(1970, 12, 31)
+mask = df['datetime'] > datetime.datetime(1970, 12, 31)
 #gr = df[mask].set_index("id").groupby([pd.Grouper(key='datetime', freq='1d'), 'id'])
 
 
