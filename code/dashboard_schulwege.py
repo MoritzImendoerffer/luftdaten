@@ -3,6 +3,7 @@ import geoviews as gv
 import hvplot.pandas
 import holoviews as hv
 from holoviews.operation import decimate
+from holoviews.operation import datashader
 from holoviews.operation import timeseries
 import pandas as pd
 import pathlib
@@ -54,7 +55,8 @@ df['pm10'] /= 10
 unique = df['id'].unique()
 map_id = {k:v for k, v in zip(unique, np.arange(len(unique)))}
 df['id_int'] = df['id'].map(map_id)
-df['datetime'] = pd.to_datetime(df['timestamp'], unit='s')
+# measured values are UTC, correct for summer time
+df['datetime'] = pd.to_datetime(df['timestamp'], unit='s') + datetime.timedelta(hours=2)
 df['datetime_str'] = df["datetime"].astype(str)
 
 unique_locations = {value: index for index, value in enumerate(set([tuple(i) for i in df.loc[:, ["latitude", "longitude"]].values]))}
@@ -67,12 +69,20 @@ df = df.merge(table.loc[:, ["id", "lastip", "name"]], on="id")
 #gr = df[mask].set_index("id").groupby([pd.Grouper(key='datetime', freq='1d'), 'id'])
 
 
-
 # Create a list of unique ids
-unique_ids = df['id'].unique().tolist()
-
+#unique_ids = df['id'].unique().tolist()
+unique_names = df['name'].unique().tolist()
+unique_ip = df['lastip'].unique().tolist()
 # Dropdown widget to select an id
-id_selector = pn.widgets.Select(name='Select id', options=unique_ids)
+#id_selector = pn.widgets.Select(name='Select id', options=unique_ids)
+ip_selector = pn.widgets.Select(name='Select ip', 
+                                options=unique_ip, 
+                                value=unique_ip[0])
+
+name_selector = pn.widgets.MultiSelect(name="Select name", 
+                                       options=unique_names,
+                                       value=[df.loc[df["lastip"]==unique_ip[0], "name"][0]])
+
 # range slider for times
 date_range_slider = DateRangeSlider(name='Date Range', 
                                     start=df['datetime'].min(), 
@@ -81,10 +91,11 @@ date_range_slider = DateRangeSlider(name='Date Range',
 
 
 # Timeseries plot
-def timeseries_plot(selected_id, date_range):
-    filtered_df = df[(df['id'] == selected_id) & 
-                        (df['datetime'] >= date_range[0]) & 
-                        (df['datetime'] <= date_range[1])].sort_values("datetime")
+def timeseries_plot(select_ip, selected_name, date_range):
+    filtered_df = df[(df['name'].isin(list(selected_name))) & 
+                     (df['lastip'].isin([select_ip])) &
+                     (df['datetime'] >= date_range[0]) & 
+                     (df['datetime'] <= date_range[1])].sort_values("datetime")
     
     hover = HoverTool(tooltips=[("pm10", "@pm10"), ("lon", "@longitude"), ('lat', '@latitude')])
     plot = hv.Scatter(filtered_df, kdims=['datetime'], vdims=['pm10', 'longitude', 'latitude', 'location_id']).opts(
@@ -94,10 +105,11 @@ def timeseries_plot(selected_id, date_range):
     curve = timeseries.rolling(c)
     return decimate(plot) * decimate(curve)
 
-def map_plot(selected_id, date_range):
-    filtered_df = df[(df['id'] == selected_id) & 
-                         (df['datetime'] >= date_range[0]) & 
-                         (df['datetime'] <= date_range[1])]
+def map_plot(select_ip, selected_name, date_range):
+    filtered_df = df[(df['name'].isin(list(selected_name))) & 
+                     (df['lastip'].isin([select_ip])) &
+                     (df['datetime'] >= date_range[0]) & 
+                     (df['datetime'] <= date_range[1])].sort_values("datetime")
     hover = HoverTool(tooltips=[("pm10", "@pm10"), ("date", "@datetime_str")])
     points = gv.Points(filtered_df, kdims=['longitude', 'latitude'], vdims=['datetime_str', 'pm10']).opts(
         color='red', cmap='viridis', colorbar=True, width=600, height=400, size=10, tools=[hover])
@@ -105,14 +117,15 @@ def map_plot(selected_id, date_range):
     tiled_map = gv.tile_sources.OSM() #.opts(width=600, height=400)
     return tiled_map * decimate(points) #points.opts(tools=[hover])
 
-@pn.depends(id_selector.param.value, date_range_slider.param.value)
-def update_plots(selected_id, date_range):
-    ts_plot_obj = timeseries_plot(selected_id, date_range)
-    map_plot_obj = map_plot(selected_id, date_range)
+@pn.depends(ip_selector.param.value, name_selector.param.value, date_range_slider.param.value)
+def update_plots(selected_ip, selected_name, date_range):
+    ts_plot_obj = timeseries_plot(selected_ip, selected_name, date_range)
+    map_plot_obj = map_plot(selected_ip, selected_name, date_range)
     return pn.Row(pn.panel(ts_plot_obj), pn.panel(map_plot_obj))
 
 dashboard = pn.Column(
-    pn.Column(id_selector,
+    pn.Column(ip_selector,
+              name_selector,
               date_range_slider,
               update_plots)
 )
