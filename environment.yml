@@ -8,11 +8,11 @@ dependencies:
   - geoviews=1.9.5
   - holoviews=1.15.3
   - hvplot=0.8.2
-  - pandas=1.5.2
+  - pandas
   - panel=0.14.2
   - bokeh=2.4.3
   - numpy
   - scipy
-  - matplotlib=3.6.0
   - seaborn
   - openpyxl
+  - jupyter_bokeh

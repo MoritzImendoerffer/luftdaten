@@ -36,13 +36,28 @@ df["datetime"] = df.datetime.ffill()
 df = df.loc[~pd.isna(df["name"]),:]
 
 
-p = df.hvplot.line(x="datetime", y="pm10", by=['name'], groupby=['ip', 'datetime.month', 'datetime.day'])
-p1 = df.hvplot.scatter(x="datetime", y="pm10")
+p = df.hvplot.line(x="datetime", y="pm10", 
+                   by=['name'], groupby=['ip', 'datetime.month', 'datetime.day'])
+p1 = df.hvplot.scatter(x="datetime", y="pm10",
+                       by=['name'], groupby=['ip', 'datetime.month', 'datetime.day'],
+                       alpha=0.25)
 #p.opts(legend_position='right', legend_cols=1)
 
-l = link_selections(p + p1, selected_color='#ff0000', unselected_alpha=1, unselected_color='#90FF90')
+# l = link_selections(p + p1, selected_color='#ff0000', unselected_alpha=1, unselected_color='#90FF90')
 #p.opts(tools=['hover', 'tap', 'box_select'])
+# items = []
 
+# from bokeh.models import Legend
 
-bserve = pn.serve(p, port=12345)
+# legend1 = Legend(
+#     items=items[0:2],
+#     location=(0, 15))
+
+# legend2 = Legend(
+#     items=items[2:],
+#     location=(0, 10))
+
+plot = p*p1
+bserve = pn.serve(plot.opts(legend_position='bottom', legend_cols=10,
+                          responsive=False, width=1000, height=800) , port=12345)
 bserve.stop()
