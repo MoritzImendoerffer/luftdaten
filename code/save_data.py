@@ -20,6 +20,7 @@ pn.extension(comms='vscode')
 from bokeh.models import HoverTool
 from panel.widgets import DateRangeSlider
 
+import modin.pandas as pd
 
 link = '/home/moritz/Sync/schulwege_data/data'
 data_path = pathlib.Path(link)
