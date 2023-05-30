@@ -10,7 +10,6 @@ import panel as pn
 import datetime
 hv.extension('bokeh')
 pn.extension(comms='vscode')
-
 import copy
 
 
