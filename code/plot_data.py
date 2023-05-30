@@ -1,33 +1,23 @@
 import pathlib
-import geoviews as gv
 import hvplot.pandas
 import holoviews as hv
-from holoviews.operation import decimate
-from holoviews.operation import datashader
-from holoviews.operation import timeseries
-from holoviews.selection import link_selections
+from bokeh.resources import INLINE
 import pandas as pd
 import pathlib
 import os
 import numpy as np
-
-from bokeh.plotting import show
 import panel as pn
 import datetime
 hv.extension('bokeh')
 pn.extension(comms='vscode')
-#pn.extension('notebook')
-#from holoviews.operation.datashader import datashade, dynspread
-from bokeh.models import HoverTool
-from panel.widgets import DateRangeSlider
 
-from bokeh.models import HoverTool, CustomJS
-from bokeh.themes import Theme
+import copy
+
 
 
 link = '/home/moritz/Sync/schulwege_data'
 data_path = pathlib.Path(link)
-interval = '5min'
+interval = '1min'
 file_path = data_path.joinpath(f"data_{interval}.xlsx")
 df = pd.read_excel(file_path)
 # grouped dataframe, therfore ffil required
@@ -35,29 +25,52 @@ df["datetime"] = df.datetime.ffill()
 # drop names with nan
 df = df.loc[~pd.isna(df["name"]),:]
 
+table_path = data_path.joinpath(f"schulen.xlsx")
+efile = pd.ExcelFile(table_path)
+sheets = efile.sheet_names
+school_dict = {}
+for sheet in sheets:
+    temp_df = efile.parse(sheet_name=sheet)
+    school = temp_df["Schule"][0]
+    school_dict[school] = {}
+    school_dict[school]["start"] = temp_df["Start"][0]
+    school_dict[school]["end"] = temp_df["Ende"][0]
+    school_dict[school]["names"] = temp_df["Nummern"]
 
-p = df.hvplot.line(x="datetime", y="pm10", 
-                   by=['name'], groupby=['ip', 'datetime.month', 'datetime.day'])
-p1 = df.hvplot.scatter(x="datetime", y="pm10",
-                       by=['name'], groupby=['ip', 'datetime.month', 'datetime.day'],
-                       alpha=0.25)
-#p.opts(legend_position='right', legend_cols=1)
+school_mapper = {}
+for school in school_dict.keys():
+    for name in school_dict[school]["names"]:
+        school_mapper[name] = school
 
-# l = link_selections(p + p1, selected_color='#ff0000', unselected_alpha=1, unselected_color='#90FF90')
-#p.opts(tools=['hover', 'tap', 'box_select'])
-# items = []
+item = school_dict['VS Längenfeld']
+start = datetime.datetime.strptime(item["start"], "%d.%m.%Y")
+end = datetime.datetime.strptime(item["end"], "%d.%m.%Y")
+names = item["names"]
+mask = (df["datetime"] > start) & (df["datetime"] < end) & (df["name"].isin(names))
+df.loc[mask,:]
 
-# from bokeh.models import Legend
+save_path = pathlib.Path("./plots")
+for school, item in school_dict.items():
+    print(school)
+    start = datetime.datetime.strptime(item["start"], "%d.%m.%Y")
+    end = datetime.datetime.strptime(item["end"], "%d.%m.%Y")
+    names = item["names"]
+    mask = (df["datetime"] > start) & (df["datetime"] < end) & (df["name"].isin(names))
+    slice = df.loc[mask,:]
 
-# legend1 = Legend(
-#     items=items[0:2],
-#     location=(0, 15))
+    pm_list = ["pm1", "pm25", "pm10"]
 
-# legend2 = Legend(
-#     items=items[2:],
-#     location=(0, 10))
+    day = copy.copy(start)
+    delta = datetime.timedelta(days=1)
+    while day < end:
+        day_string = day.strftime("%Y_%m_%d")
+        print(day)
+        for pm in pm_list:
+            slice_day = df.loc[mask, :]
+            p = slice.hvplot.line(x="datetime", y=pm, by='name', hover_cols=['latitude', 'longitude']).opts(legend_position="bottom", title=f"{school}, {day_string}", width=1000, height=800)
+            save_path = pathlib.Path(f"/home/moritz/Sync/schulwege_data/plots_new/{school}")
+            os.makedirs(save_path, exist_ok=True)
+            file_name = save_path.joinpath(f'{pm}_{day_string}.html')
+            pn.pane.HoloViews(p*hv.HLine(15).opts(color="black",line_dash='dashed',  line_width=2.0)).save(file_name, embed=True, resources=INLINE)
 
-plot = p*p1
-bserve = pn.serve(plot.opts(legend_position='bottom', legend_cols=10,
-                          responsive=False, width=1000, height=800) , port=12345)
-bserve.stop()
+        day += delta

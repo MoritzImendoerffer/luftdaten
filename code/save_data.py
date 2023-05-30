@@ -1,26 +1,11 @@
 import pathlib
-import geoviews as gv
-import hvplot.pandas
-import holoviews as hv
-from holoviews.operation import decimate
-from holoviews.operation import datashader
-from holoviews.operation import timeseries
 import pandas as pd
 import pathlib
 import os
 import numpy as np
-
-from bokeh.plotting import show
-import panel as pn
 import datetime
-hv.extension('bokeh')
-pn.extension(comms='vscode')
-#pn.extension('notebook')
-#from holoviews.operation.datashader import datashade, dynspread
-from bokeh.models import HoverTool
-from panel.widgets import DateRangeSlider
 
-import modin.pandas as pd
+
 
 link = '/home/moritz/Sync/schulwege_data/data'
 data_path = pathlib.Path(link)
