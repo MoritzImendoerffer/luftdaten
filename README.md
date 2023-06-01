@@ -1,7 +1,14 @@
-# luftdaten
-analyse der sensordaten luftdaten.at
+# Workflow
 
-# Download der luftdaten
-Beispiel für einen Tag (das Gleiche nochmal mit *.csv*)
+## Automatic generation of timeseries plots
 
-wget -A "*sps30*.csv" -r -np -nc -l1 --no-check-certificate -e robots=off http://archive.sensor.community/2022-12-13/
+Download all data and the table from http://fnord:5000/list
+Save the data as defined in "save_data.py" and plot_data.py"
+
+1. execute save_data.py (takes a few minutes. Pandas is slow when aggregating time series data)
+2. execute plot_data.py
+
+
+
+# TODO
+Find a better way to handle file paths. E.g. in a config file

@@ -5,10 +5,24 @@ import os
 import numpy as np
 import datetime
 
+"""
+Reads the raw data files in the "data" folder and creates aggregatet data
+- data folder: '2_Projects/Saubere Luft am Schulweg/auswertung/schulwege_data/data'
+- aggregated data is stored in '2_Projects/Saubere Luft am Schulweg/auswertung/schulwege_data'
 
 
-link = '/home/moritz/Sync/schulwege_data/data'
-data_path = pathlib.Path(link)
+"""
+# Change this link if you are running your script locally
+link_to_cloud = '/home/moritz/cloud.luftdaten.at'
+
+# frequencies to aggregate the data
+frequencies = ["1Min", "5Min", "15Min", "1d"]
+
+# do not change folder structures here
+internal_path = '2_Projects/Saubere Luft am Schulweg/auswertung/schulwege_data/'
+data_path = pathlib.Path(link_to_cloud).joinpath(internal_path).joinpath("data")
+
+
 files = [f for f in os.listdir(data_path) if f.endswith('.csv')]
 
 table = pd.read_csv(data_path.parent.joinpath('table.csv'))
@@ -52,30 +66,9 @@ mask = df['datetime'] > datetime.datetime(1970, 12, 31)
 df = df.loc[mask,:]
 df = df.merge(table.loc[:, ["id", "lastip", "name"]], on="id")
 
-gr = df.set_index("id").groupby([pd.Grouper(key='datetime', freq='5Min'), 'id'])
-df_mean = gr.aggregate("mean", numeric_only=True)
-df_mean["name"] = df_mean.index.get_level_values(1).map(name_mapper)
-df_mean["ip"] = df_mean.index.get_level_values(1).map(ip_mapper)
-#df_mean.reset_index(drop=True).to_excel(data_path.parent.joinpath('data_5min.xlsx'))
-df_mean.to_excel(data_path.parent.joinpath('data_5min.xlsx'))
-
-gr = df.set_index("id").groupby([pd.Grouper(key='datetime', freq='1Min'), 'id'])
-df_mean = gr.aggregate("mean", numeric_only=True)
-df_mean["name"] = df_mean.index.get_level_values(1).map(name_mapper)
-df_mean["ip"] = df_mean.index.get_level_values(1).map(ip_mapper)
-#df_mean.reset_index(drop=True).to_excel(data_path.parent.joinpath('data_1min.xlsx'))
-df_mean.to_excel(data_path.parent.joinpath('data_1min.xlsx'))
-
-gr = df.set_index("id").groupby([pd.Grouper(key='datetime', freq='15Min'), 'id'])
-df_mean = gr.aggregate("mean", numeric_only=True)
-df_mean["name"] = df_mean.index.get_level_values(1).map(name_mapper)
-df_mean["ip"] = df_mean.index.get_level_values(1).map(ip_mapper)
-#df_mean.reset_index(drop=True).to_excel(data_path.parent.joinpath('data_15min.xlsx'))
-df_mean.to_excel(data_path.parent.joinpath('data_15min.xlsx'))
-
-gr = df.set_index("id").groupby([pd.Grouper(key='datetime', freq='1d'), 'id'])
-df_mean = gr.aggregate("mean", numeric_only=True)
-df_mean["name"] = df_mean.index.get_level_values(1).map(name_mapper)
-df_mean["ip"] = df_mean.index.get_level_values(1).map(ip_mapper)
-#df_mean.reset_index(drop=True).to_excel(data_path.parent.joinpath('data_1day.xlsx'))
-df_mean.to_excel(data_path.parent.joinpath('data_1day.xlsx'))
+for freq in frequencies:
+    gr = df.set_index("id").groupby([pd.Grouper(key='datetime', freq=freq), 'id'])
+    df_mean = gr.aggregate("mean", numeric_only=True)
+    df_mean["name"] = df_mean.index.get_level_values(1).map(name_mapper)
+    df_mean["ip"] = df_mean.index.get_level_values(1).map(ip_mapper)
+    df_mean.to_excel(data_path.parent.joinpath(f'data_{freq}.xlsx'))
