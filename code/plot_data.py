@@ -27,19 +27,35 @@ Outputs:
 Plots per school and day as well as size fraction in the folder "plots"
 """
 
+'''
+Config section
+
+TODO: move to config file
+'''
 
 # Change this link if you are running your script locally
 link_to_cloud = '/home/moritz/cloud.luftdaten.at'
-
 # must match f"data_{interval}.xlsx"
 interval = '1min'
-
-# do not change folder structures here
+# filenames for aggretagted data
+agg_file = f"data_{interval}.xlsx"
+# the root folder of schulwege_data
 internal_path = '2_Projects/Saubere Luft am Schulweg/auswertung/schulwege_data/'
-data_path = pathlib.Path(link_to_cloud).joinpath(internal_path)
-plot_path = data_path.joinpath('plots')
-file_path = data_path.joinpath(f"data_{interval}.xlsx")
 
+# filename school overview
+school_info = "schulen.xlsx"
+plot_folder = "plots"
+# currently hardcoded hours for x axis of overlay plots
+# TODO: add option to use data provided in file "schulen.xlsx"
+hour_start = 7
+hour_end = 18
+
+
+# Config section end
+data_path = pathlib.Path(link_to_cloud).joinpath(internal_path)
+plot_path = data_path.joinpath('plot_folder')
+file_path = data_path.joinpath(agg_file)
+table_path = data_path.joinpath(school_info)
 
 df = pd.read_excel(file_path)
 # grouped dataframe, therfore ffil required
@@ -48,7 +64,6 @@ df["datetime"] = df.datetime.ffill()
 df = df.loc[~pd.isna(df["name"]),:]
 
 # loads the data from schulen.xlsx and saves as dictionary
-table_path = data_path.joinpath("schulen.xlsx")
 efile = pd.ExcelFile(table_path)
 sheets = efile.sheet_names
 school_dict = {}
@@ -88,7 +103,10 @@ for school, item in school_dict.items():
         mask = (slice["datetime"] >= day) & (slice["datetime"] <= day+delta)
         for pm in pm_list:
             slice_day = slice.loc[mask, :]
-            p = slice.hvplot.line(x="datetime", 
+            mask1 = (slice_day["datetime"] >= day + datetime.timedelta(hours=hour_start)) & \
+                    (slice_day["datetime"] <= day + datetime.timedelta(hours=hour_end))
+            slice_hour = slice.loc[mask1, :]
+            p = slice_hour.hvplot.line(x="datetime", 
                                   y=pm, 
                                   by='name', 
                                   hover_cols=['latitude', 'longitude']).opts(legend_position="bottom", 
