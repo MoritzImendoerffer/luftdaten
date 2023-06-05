@@ -53,7 +53,7 @@ hour_end = 18
 
 # Config section end
 data_path = pathlib.Path(link_to_cloud).joinpath(internal_path)
-plot_path = data_path.joinpath('plots')
+plot_path = data_path.joinpath('plot_folder')
 file_path = data_path.joinpath(agg_file)
 table_path = data_path.joinpath(school_info)
 
@@ -105,7 +105,7 @@ for school, item in school_dict.items():
             slice_day = slice.loc[mask, :]
             mask1 = (slice_day["datetime"] >= day + datetime.timedelta(hours=hour_start)) & \
                     (slice_day["datetime"] <= day + datetime.timedelta(hours=hour_end))
-            slice_hour = slice_day.loc[mask1, :]
+            slice_hour = slice.loc[mask1, :]
             p_day = slice_hour.hvplot.line(x="datetime", 
                                   y=pm, 
                                   by='name', 
@@ -120,14 +120,14 @@ for school, item in school_dict.items():
                                                                              title=f"{school}, {day_string}", 
                                                                              width=1000, height=800)
             
-            save_path = plot_path.joinpath(school)
+            plot_path = plot_path.joinpath(school)
             
-            save_path_day = save_path.joinpath("plots_day")
+            save_path_day = plot_path.joinpath("plots_day")
             os.makedirs(save_path_day, exist_ok=True)
             file_name = save_path_day.joinpath(f'{pm}_{day_string}.html')
             pn.pane.HoloViews(p_day*hv.HLine(15).opts(color="black",line_dash='dashed',  line_width=2.0)).save(file_name, embed=True, resources=INLINE)
 
-            save_path_full = save_path.joinpath('plots_24h')
+            save_path_full = plot_path.joinpath('plots_24h')
             os.makedirs(save_path_full, exist_ok=True)
             file_name = save_path_full.joinpath(f'{pm}_{day_string}_24h.html')
             pn.pane.HoloViews(p_full*hv.HLine(15).opts(color="black",line_dash='dashed',  line_width=2.0)).save(file_name, embed=True, resources=INLINE)
